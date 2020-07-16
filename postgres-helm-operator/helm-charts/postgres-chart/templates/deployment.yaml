@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "postgres-chart.fullname" . }}
+  labels:
+    app: {{ template "postgres-chart.name" . }}
+    chart: {{ template "postgres-chart.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "postgres-chart.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "postgres-chart.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image}}"
+          ports:
+            - name: postgres
+              containerPort: {{ .Values.container.port }}
+              protocol: TCP
+          env:
+          - name: POSTGRESQL_USER
+            value: primary
+          - name: POSTGRESQL_PASSWORD
+            value: admin123
+          - name: POSTGRESQL_DATABASE
+            value: pgdb
+          volumeMounts:
+          - name: postgresql-data
+            mountPath: "/var/lib/postgresql/data"
+      volumes:
+      - name: postgresql-data
+        persistentVolumeClaim:
+          claimName: "{{.Values.pvc.name}}"
